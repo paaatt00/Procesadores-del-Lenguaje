@@ -163,21 +163,13 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 		dotFuncion.escribirFicheroDot(tabla.getTablaFunciones().get(name).getNombreFuncion());
 		convertDotToSvg(tabla.getTablaFunciones().get(name).getNombreFuncion());
 		dotFuncion.setTextDot(new ArrayList<String>());
-    }
-
-	@Override 
-	public void enterDev_funcion(gramaticaParser.Dev_funcionContext ctx) { 
-		System.out.println("estoy en enterDev_funcion");
-		if (ctx.equals("")) {
-			name += ctx.var().identificador().getText();  
-		}
 	}
-
+	
 	@Override 
 	public void enterNombre_funcion(gramaticaParser.Nombre_funcionContext ctx) { 
 		System.out.println("estoy en enterNombre_funcion");
 		if (funcionNueva) { 
-			name += ctx.identificador().getText();
+			name = ctx.identificador().getText();
 			nombreFuncion = ctx.identificador().getText();
 			System.out.println(name);
 			stringToDotFuncion("        label = \"" + name + "\";\n");
@@ -189,7 +181,15 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 	public void enterParametros_funcion(gramaticaParser.Parametros_funcionContext ctx) {
 		System.out.println("estoy en enterParametrosFuncion");
 		if (funcionNueva) {
+			/*
 			contadorParametros++;
+			parametros += ctx.var().identificador().getText() + ", ";
+			tieneParametros = true;
+			*/
+			String cadena = ctx.getText();
+			for (String retval: cadena.split(",")) {     
+				contadorParametros++;
+			}
 			parametros += ctx.getText() + ", ";
 			tieneParametros = true;
 		}
@@ -250,14 +250,6 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 	@Override 
 	public void exitLinea(gramaticaParser.LineaContext ctx) { 
 		System.out.println("estoy en exitLinea");
-		/*
-		 * sumarPuntoLineaEfectiva();
-		 * 
-		 * stringToDotFuncion("        linea" + contadorLineas + " -> ");
-		 * stringToDotPrograma("        linea" + contadorLineas + " -> ");
-		 * contadorLineas++; stringToDotFuncion("linea" + contadorLineas + ";\n");
-		 * stringToDotPrograma("linea" + contadorLineas + ";\n");
-		 */
 	}
 	
 	// SI //
@@ -266,6 +258,7 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 	public void enterPr_si(gramaticaParser.Pr_siContext ctx) {
 		System.out.println("estoy en enterPr_si");
 		addValorBucleBifurcacion();
+		System.out.println(listaPuntosBucleBifurcacion.size());
 	}
 
 	@Override 
@@ -287,6 +280,7 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 	public void enterPr_mientras(gramaticaParser.Pr_mientrasContext ctx) { 
 		System.out.println("estoy en enterPr_mientras");
 		addValorBucleBifurcacion();
+		System.out.println(listaPuntosBucleBifurcacion.size());
 	}
 
 	@Override 
@@ -329,6 +323,7 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 	public void enterPr_para(gramaticaParser.Pr_paraContext ctx) {
 		System.out.println("estoy en enterPr_para");
 		addValorBucleBifurcacion();
+		System.out.println(listaPuntosBucleBifurcacion.size());
 	}
 
 	@Override 
@@ -371,11 +366,12 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 	}
 
 	// SEGUN //
-
+/*
 	@Override 
 	public void enterPr_segun(gramaticaParser.Pr_segunContext ctx) {
 		System.out.println("estoy en enterPr_segun");
 		addValorBucleBifurcacion();
+		System.out.println(listaPuntosBucleBifurcacion.size());
 	}
 
 	@Override 
@@ -390,7 +386,7 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 		System.out.println("estoy en exitCuerpo_segun");
 		terminarBucleBifurcacion();
 	}
-
+*/
 	// LLAMADAS //
 
 	@Override 
@@ -580,7 +576,9 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 				+ "</strong></li>\n        <li>Numero de llamadas a funciones: <strong>" + v.getNumberFunctionCalls()
 				+ "</strong></li>\n        <li>Numero de lineas de codigo efectivas: <strong>"
 				+ v.getNumberLinesOfCode() + "</strong></li>\n        <li>Numero de parametros esperados: <strong>"
-				+ v.getNumberParameters() + "</strong></li>\n<br>\n        <li>Puntos de declaraciones: <strong>"
+				+ v.getNumberParameters() 
+				+ "</strong></li></ul>\n    <li>Puntos: "
+				+ "</strong></li><ul>\n       <li>Puntos de declaraciones: <strong>"
 				+ v.getVariablePoints() + "</strong></li>\n        <li>Puntos de parametros: <strong>"
 				+ v.getParemeterCallsPoints() + "</strong></li>\n        <li>Puntos de llamada de funciones: <strong>"
 				+ v.getFunctionCallsPoints() + "</strong></li>\n        <li>Puntos de operacion simple: <strong>"
@@ -601,7 +599,7 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 	private void convertDotToSvg(String nombre) {
 		try {
 			String[] cmd = new String[5];
-			cmd[0] = "dot.exe";
+			cmd[0] = "dot";
 			cmd[1] = "-Tsvg";
 			cmd[2] = "-o";
 			cmd[3] = System.getProperty("user.dir") + "\\" + nombre + ".svg";
@@ -612,7 +610,6 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
 	}	
 	
 	@Override
@@ -622,7 +619,7 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 				if (llamada.equals(function.getNombreFuncion())) {
 					for (int numLinea : lineasLlamadas.get(llamada)) {
 						stringToDotPrograma("    linea" + numLinea + " -> linea" + function.getPrimeraLinea() + ";\n");
-						stringToDotPrograma("    linea" + function.getUltimaLinea() + " -> linea" + numLinea + ";\n");
+						stringToDotPrograma("    linea" + function.getUltimaLinea() + " -> linea" + numLinea + ";\n } \n");
 					}
 				}
 			}
@@ -634,7 +631,7 @@ public class ListenerBasico extends gramaticaParserBaseListener {
 						+ ";\n    linea" + funcion.getUltimaLinea() + " -> end;\n    start [style=filled, color=red];\n    end [style=filled, color=blue];\n}");
 			}
 		}
-
+		
 		dotPrograma.escribirFicheroDot(nombrePrograma);
 		convertDotToSvg(nombrePrograma);
 
