@@ -19,7 +19,6 @@ public class Dot {
     public void escribirFicheroDot(String nombreFichero) {
         try {
 			archivo = new FileWriter(System.getProperty("user.dir") + "\\" + nombreFichero + ".dot");
-
 			for (String str: textDot) {
 				archivo.write(str);
 			}
